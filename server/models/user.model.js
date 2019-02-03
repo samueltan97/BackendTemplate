@@ -9,7 +9,7 @@ const UserSchema = new mongoose.Schema({
     email: {
         type: String,
         trim: true,
-        unqieu: 'Email already exists',
+        unique: 'Email already exists',
         match: [/.+\@.+\..+/, 'Please fill a valid email address'],
         require: 'Email is required'
     },
@@ -49,9 +49,19 @@ UserSchema.methods = {
                 .digest('hex')
         } catch (err) {
             return ''
-        },
-        makeSalt: function() {
-            return Math.round((new Date().valueOf() * Math.random())) + ''
         }
+    },
+    makeSalt: function() {
+        return Math.round((new Date().valueOf() * Math.random())) + ''
     }
 }
+UserSchema.path('hashed_password').validate(function (v) {
+    if (this._password && this._password.length < 6) {
+        this.invalidate('password', 'Password must be at least 6 characters.')
+    }
+    if (this.isNew && !this._password) {
+        this.invalidate('password', 'Password is required')
+    }
+}, null)
+
+export default mongoose.model('User', UserSchema)
